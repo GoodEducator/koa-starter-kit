@@ -1,0 +1,22 @@
+{
+  "name": "koa-starter-kit2",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@git.oschina.net:hzerica/koa-starter-kit2.git",
+  "author": "DengYun <dengyun@meideng.net>",
+  "license": "GPL",
+  "scripts": {
+    "start": "cross-env NODE_ENV=development nodemon ./bin/server.js"
+  },
+  "dependencies": {
+    "cross-env": "^5.0.1",
+    "koa": "^2.3.0",
+    "koa-docs": "^2.1.0",
+    "koa-router": "^7.2.1",
+    "methods": "^1.1.2",
+    "mongodb": "^2.2.30"
+  },
+  "devDependencies": {
+    "nodemon": "^1.11.0"
+  }
+}
