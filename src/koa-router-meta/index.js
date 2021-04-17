@@ -4,18 +4,34 @@
 
 const Router = require('koa-router');
 const methods = require('methods');
+require('./docHtml');
 
-Router.prototype._recordSubroute = function (opts) {
-  this._routes = this._routes || [];
-  this._routes.push(opts);
+Router.prototype._recordRequest = function (opts) {
+  this._requests = this._requests || [];
+  this._requests.push(opts);
 };
+
+Router.prototype._recordSubRoute = function (opts) {
+  if (!opts.path) {
+    return;
+  }
+  const router = opts.handlers.map(v=>v.router).find(v=>v);
+  if (!router) {
+    return;
+  }
+  this._childRoutes = this._childRoutes || [];
+  this._childRoutes.push({
+    path: opts.path,
+    router,
+  });
+}
 
 methods.forEach(method => {
   const origin = Router.prototype[method];
 
   const override = function (opts, ...extra) {
     if (typeof(opts) === 'string') {
-      this._recordSubroute({
+      this._recordRequest({
         method: method.toUpperCase(),
         path: opts,
         handlers: extra,
@@ -23,7 +39,7 @@ methods.forEach(method => {
       return origin.call(this, opts, ...extra);
     }
     const { path, handlers } = opts;
-    this._recordSubroute(opts);
+    this._recordRequest(opts);
     return origin.call(this, path, ...handlers);
   };
   override.origin = origin;
@@ -46,31 +62,15 @@ Router.prototype.request = function(opts) {
   return this[lowerMethod](opts);
 };
 
-function optToJson({ method, path, handlers, validates, }){
-  const subrouter = handlers.map(v => v.router).find(v=>v) || null;
-  return {
-    method,
-    path,
-    isSubRouter: !!subrouter,
-  };
-}
-
-Router.prototype.metaRoute = function() {
-  return async ctx => {
-    if (!this._routes) {
-      ctx.body = {
-        childRoutes: [],
-      };
-      return;
-    }
-    const jsons = this._routes.map(optToJson)
-    ctx.body = {
-      childRoutes: jsons.filter(v => v.isSubRouter),
-      requests: jsons.filter(v => !v.isSubRouter),
-    };
-  };
+const originUse = Router.prototype.use;
+Router.prototype.use = function(path, ...handlers) {
+  if (typeof(path) === 'string') {
+    this._recordSubRoute({path, handlers});
+  }
+  originUse.call(this, path, ...handlers);
 };
 
 Router.prototype.registerMetaRoute = function() {
   this.get.origin.call(this, '/_meta', this.metaRoute());
+  this.get.origin.call(this, '/_doc.html', this.metaDocRoute());
 };
