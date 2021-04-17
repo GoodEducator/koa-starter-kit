@@ -6,6 +6,8 @@ const Router = require('koa-router');
 const methods = require('methods');
 require('./docHtml');
 
+const mockResponse = require('./mockResponse');
+
 Router.prototype._recordRequest = function (opts) {
   this._requests = this._requests || [];
   this._requests.push(opts);
@@ -38,8 +40,18 @@ methods.forEach(method => {
       });
       return origin.call(this, opts, ...extra);
     }
-    const { path, handlers } = opts;
-    this._recordRequest(opts);
+    const { path } = opts;
+    const handlers = opts.handlers ? [...opts.handlers] : [];
+    if (opts.mockResponse) {
+      handlers.push(mockResponse(opts.mockResponse));
+    }
+    if (opts.handler) {
+      handlers.push(opts.handler);
+    }
+    this._recordRequest(Object.assign({}, opts, {
+      method: method.toUpperCase(),
+      handlers,
+    }));
     return origin.call(this, path, ...handlers);
   };
   override.origin = origin;

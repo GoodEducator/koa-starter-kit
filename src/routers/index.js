@@ -10,8 +10,12 @@ if (__DEV__) {
 
 router.use('/user', require('./user').routes());
 
-router.get('/hello', async ctx => {
-  ctx.body = "world.";
+router.get({
+  path:'/hello',
+  mockResponse: 'This is a mock response.',
+  handler: async ctx => {
+    ctx.body = "world.";
+  },
 });
 
 
