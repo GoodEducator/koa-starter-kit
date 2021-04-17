@@ -2,6 +2,7 @@
  * Created by DengYun on 2017/7/21.
  */
 const Koa = require('koa');
+require('./koa-router-meta');
 const router = require('./routers');
 
 
